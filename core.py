@@ -171,40 +171,54 @@ if ticker:
         st.warning("❗ Nombre d'actions non disponible, impossible de calculer la valorisation par action.")
         st.write(f"🏷️ Valorisation totale estimée (DCF) : **{dcf_value:,.0f} $**")
 
-
-# Onglet 2 – Monte Carlo
 with onglet[1]:
     st.header("🎲 DCF Monte Carlo Simulation")
 
-    st.subheader("⚙️ Paramètres de simulation")
+    ticker = st.text_input("Entrez le ticker de l’entreprise", "AAPL")
 
-    mean_growth = st.slider("Croissance moyenne (%)", -10.0, 20.0, 5.0, 0.1)
-    std_dev_growth = st.slider("Écart-type de croissance (%)", 0.1, 10.0, 2.0, 0.1)
-    discount_rate = st.slider("Taux d'actualisation (%)", 2.0, 15.0, 8.0, 0.1)
-    initial_cashflow = st.number_input("Cash Flow initial ($)", 0.0, 1e9, 1_000_000.0, 50000.0)
-    periods = st.slider("Nombre d'années projetées", 3, 15, 5)
+    if ticker:
+        stock = yf.Ticker(ticker)
+        info = stock.info
 
-    n_simulations = 5000
-    final_values = []
+        # 🧾 Extraction des données de base
+        try:
+            initial_cashflow = info.get('freeCashflow', 100000000)  # $ par défaut si non dispo
+            st.success(f"Cash Flow initial détecté : ${initial_cashflow:,.0f}")
+        except:
+            initial_cashflow = 1_000_000
+            st.warning("Cash Flow non trouvé, valeur par défaut utilisée.")
 
-    for _ in range(n_simulations):
-        cashflow = initial_cashflow
-        npv = 0
-        for year in range(1, periods + 1):
-            growth_rate = np.random.normal(mean_growth / 100, std_dev_growth / 100)
-            cashflow *= (1 + growth_rate)
-            npv += cashflow / ((1 + discount_rate / 100) ** year)
-        final_values.append(npv)
+        # 🔧 Paramètres ajustables
+        st.subheader("⚙️ Hypothèses personnalisées")
 
-    st.subheader("📈 Distribution des valorisations")
-    fig, ax = plt.subplots()
-    ax.hist(final_values, bins=50, edgecolor='k')
-    ax.set_title("Simulation Monte Carlo des DCF")
-    ax.set_xlabel("Valeur actualisée ($)")
-    ax.set_ylabel("Fréquence")
-    st.pyplot(fig)
+        mean_growth = st.slider("Croissance moyenne estimée (%)", -10.0, 20.0, 5.0, 0.1)
+        std_dev_growth = st.slider("Volatilité de croissance (%)", 0.1, 10.0, 2.0, 0.1)
+        discount_rate = st.slider("Taux d'actualisation (%)", 2.0, 15.0, 8.0, 0.1)
+        periods = st.slider("Durée de projection (années)", 3, 15, 5)
+        n_simulations = 5000
 
-    st.success(f"💡 Valeur moyenne estimée : ${np.mean(final_values):,.2f}")
+        # 🎲 Monte Carlo Simulation
+        final_vals = []
+
+        for _ in range(n_simulations):
+            cf = initial_cashflow
+            npv = 0
+            for year in range(1, periods + 1):
+                growth = np.random.normal(loc=mean_growth / 100, scale=std_dev_growth / 100)
+                cf *= (1 + growth)
+                npv += cf / ((1 + discount_rate / 100) ** year)
+            final_vals.append(npv)
+
+        # 📈 Résultat
+        st.subheader("📈 Distribution simulée des valorisations")
+        fig, ax = plt.subplots()
+        ax.hist(final_vals, bins=50, edgecolor='black')
+        ax.set_title(f"Monte Carlo DCF – {ticker}")
+        ax.set_xlabel("Valeur actuelle nette ($)")
+        ax.set_ylabel("Fréquence")
+        st.pyplot(fig)
+
+        st.success(f"💰 Valeur moyenne simulée : ${np.mean(final_vals):,.2f}")
 # bas de page
 
 st.markdown("""
