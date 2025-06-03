@@ -15,10 +15,8 @@ onglet = st.tabs(["📘 DCF Classique", "🎲 DCF Monte Carlo"])
 #onglet 1
 with onglet[0]:
     st.header("📘 DCF Classique")
-
-ticker = st.text_input("Entrez le ticker de l’entreprise (ex: AAPL, MSFT, TSLA)", "AAPL") #U ask
-
-if ticker:
+    ticker = st.text_input("Entrez le ticker de l’entreprise (ex: AAPL, MSFT, TSLA)", "AAPL") #U ask
+    # if ticker:
     stock = yf.Ticker(ticker)
 
     st.header("🧾 Données financières de base")
