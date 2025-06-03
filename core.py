@@ -219,6 +219,34 @@ with onglet[1]:
         st.pyplot(fig)
 
         st.success(f"💰 Valeur moyenne simulée : ${np.mean(final_vals):,.2f}")
+
+        # 🔢 Données nécessaires depuis yfinance
+        shares_outstanding = info.get('sharesOutstanding', None)
+        total_debt = info.get('totalDebt', 0)
+        total_cash = info.get('totalCash', 0)
+
+        # 🧮 Calculs
+        enterprise_value_mean = np.mean(final_vals)
+        net_debt = total_debt - total_cash
+        equity_value = enterprise_value_mean - net_debt
+
+        st.subheader("💵 Valorisation par action")
+
+        if shares_outstanding:
+            fair_value_per_share = equity_value / shares_outstanding
+            st.metric("Valeur estimée par action (simulée)", f"${fair_value_per_share:.2f}")
+
+            # Optionnel : détails supplémentaires
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.write(f"Actions en circulation : {shares_outstanding:,}")
+            with col2:
+                st.write(f"Dette nette : ${net_debt:,.0f}")
+            with col3:
+                st.write(f"Equity Value : ${equity_value:,.0f}")
+        else:
+            st.warning("Nombre d’actions introuvable. Impossible de calculer la valeur par action.")
+
 # bas de page
 
 st.markdown("""
